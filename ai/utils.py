@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import pickle
 import face_recognition
+import tempfile
 from initialize_firebase import *
 
 def load_encoded_faces():
@@ -11,17 +12,44 @@ def load_encoded_faces():
         return pickle.load(f)
 
 encodeListKnown, studentIds = load_encoded_faces()
-encodeListKnown,studentIds
-def add_user(name):
-    new_user=users_ref.push({'name': name })
-    return new_user.key
 
-def add_pictures(user_id,folderPath="dataset"):
-     for image in os.listdir(os.path.join(folderPath, user_id)):
-        fileName = f'{folderPath}/{user_id}/{image}'
+def add_user(name, file):
+    # Check if the name already exists in the database
+    query = users_ref.order_by_child('name').equal_to(name).get()
+    if query:
+        # If the name already exists, return False
+        return False
+
+    # Add the new user to the database
+    new_user = users_ref.push({'name': name, "last_presence": ""})
+    user_id = new_user.key
+    
+    # Call add_pictures_of_user function and return its result
+    return add_pictures_of_user(user_id, file)
+
+
+def add_pictures_of_user(user_id,file):
+    # Create a temporary file to store the uploaded image
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        file.save(temp_file.name)
+
+        # Upload the file to Firebase Storage
+        filename = f'dataset/{user_id}/{file.filename}'
         bucket = storage.bucket()
-        blob = bucket.blob(fileName)
-        blob.upload_from_filename(fileName)
+        blob = bucket.blob(filename)
+        
+        try:
+            blob.upload_from_filename(temp_file.name)
+        except Exception as e:
+            # If an error occurs during upload, delete the user and return False
+            users_ref.child(user_id).delete()
+            os.unlink(temp_file.name)
+            return False
+
+    # Delete the temporary file
+    os.unlink(temp_file.name)
+    return True
+
 
 
 # Function to identify person from image
