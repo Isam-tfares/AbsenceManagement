@@ -1,17 +1,15 @@
 import os
 from datetime import datetime
-import pickle
-import face_recognition
 import tempfile
+import face_recognition
+import logging
 from initialize_firebase import *
+from EncodeGenerator import *
+from PIL import Image
+import shutil
 
-def load_encoded_faces():
-    blob = bucket.blob('EncodeFile.p')
-    blob.download_to_filename('EncodeFile.p')
-    with open('EncodeFile.p', 'rb') as f:
-        return pickle.load(f)
 
-encodeListKnown, studentIds = load_encoded_faces()
+encodeListKnown, studentIds = get_encoded_images()
 
 def add_user(name, file):
     # Check if the name already exists in the database
@@ -25,29 +23,36 @@ def add_user(name, file):
     user_id = new_user.key
     
     # Call add_pictures_of_user function and return its result
-    return add_pictures_of_user(user_id, file)
+    ret = add_pictures_of_user(user_id, file)
+    # if ret:
+    #     # Update the EncodeFile.p with the new encoding
+    #     update_encode_file()
+    #     encodeListKnown, studentIds = get_encoded_images()
+    return ret
 
 
 def add_pictures_of_user(user_id,file):
-    # Create a temporary file to store the uploaded image
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        file.save(temp_file.name)
 
-        # Upload the file to Firebase Storage
-        filename = f'dataset/{user_id}/{file.filename}'
-        bucket = storage.bucket()
-        blob = bucket.blob(filename)
-        
-        try:
-            blob.upload_from_filename(temp_file.name)
-        except Exception as e:
-            # If an error occurs during upload, delete the user and return False
-            users_ref.child(user_id).delete()
-            os.unlink(temp_file.name)
-            return False
+    pil_image = Image.open(file).convert("RGB")
+    # Create the directory
+    directory = f'dataset/{user_id}'
+    os.makedirs(directory, exist_ok=True)
+    # Save the image
+    image_name=file.filename.rsplit('.', 1)[0].lower() + '.jpg'
+    filename_path=os.path.join(f'dataset/{user_id}/', image_name)
+    pil_image.save(filename_path)
+    # Upload the image in DB
+    bucket = storage.bucket()
+    blob = bucket.blob(filename_path)
+    try:
+        blob.upload_from_filename(filename_path)
+    except Exception as e:
+        # If an error occurs during upload, delete the user and return False
+        users_ref.child(user_id).delete()
+        shutil.rmtree(f'dataset/{user_id}/')
+        os.unlink(filename_path)
+        return False
 
-    # Delete the temporary file
-    os.unlink(temp_file.name)
     return True
 
 
@@ -65,7 +70,7 @@ def identify_person_from_image(image_path):
     for face_encoding in face_encodings:
         matches = face_recognition.compare_faces(encodeListKnown, face_encoding)
         if True in matches:
-            person_index = matches.index(True) // 3
+            person_index = matches.index(True)
             person_id = studentIds[person_index]  # get person_id
             person_data = users_ref.child(person_id).get()
             person_name = person_data['name']

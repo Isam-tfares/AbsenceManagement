@@ -55,9 +55,8 @@ def get_encoded_images():
     encodeListKnown, studentIds = encodeListKnownWithIds
     return encodeListKnown, studentIds
 
-
-imgList,studentIds=get_upload_images_ids()
-# print(imgList,studentIds)
-encodeImages(imgList,studentIds)
+def update_encode_file():
+    imgList, studentIds = get_upload_images_ids()
+    encodeImages(imgList, studentIds)
 
     
