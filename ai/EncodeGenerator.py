@@ -4,9 +4,8 @@ import pickle
 import os
 from initialize_firebase import *
 
-
-# Importing student images
-def get_upload_images_ids():
+# upload images in Storage
+def upload_images():
     folderPath = 'dataset'
     users = os.listdir(folderPath)
     print(users)
@@ -22,6 +21,20 @@ def get_upload_images_ids():
             blob.upload_from_filename(fileName)
 
     return imgList,studentIds
+# Importing student images
+def get_upload_images_ids():
+    folderPath = 'dataset'
+    users = os.listdir(folderPath)
+    print(users)
+    imgList = []
+    studentIds = []
+    for user in users:
+        studentIds.append(user)
+        for image in os.listdir(os.path.join(folderPath, user)):
+            fileName = f'{folderPath}/{user}/{image}'
+            imgList.append(cv2.imread(fileName))
+
+    return imgList,studentIds
 
 def findEncodings(imagesList):
     encodeList = []
@@ -32,20 +45,6 @@ def findEncodings(imagesList):
 
     return encodeList
 
-def encodeImages(imgList,studentIds):
-    print("Encoding Started ...")
-    encodeListKnown = findEncodings(imgList)
-    encodeListKnownWithIds = [encodeListKnown, studentIds]
-    print("Encoding Complete")
-
-    file = open("EncodeFile.p", 'wb')
-    pickle.dump(encodeListKnownWithIds, file)
-    fileName = "EncodeFile.p"
-    bucket = storage.bucket()
-    blob = bucket.blob(fileName)
-    blob.upload_from_filename(fileName)
-    file.close()
-    print("File Saved")
 
 def get_encoded_images():
     print("Loading Encode File ...")
@@ -55,8 +54,27 @@ def get_encoded_images():
     encodeListKnown, studentIds = encodeListKnownWithIds
     return encodeListKnown, studentIds
 
-def update_encode_file():
-    imgList, studentIds = get_upload_images_ids()
-    encodeImages(imgList, studentIds)
+def encodeImages(imgList, studentIds, encodeListKnown=[],studentIdsKnown=[]):
+    print("Encoding Started ...")
+    new_encodeListKnown = findEncodings(imgList)
 
-    
+    # Append new encodings to existing list
+    updated_encodeListKnown = encodeListKnown + new_encodeListKnown
+    updated_studentIdsKnown= studentIdsKnown + studentIds
+    updated_encodeListKnownWithIds = [updated_encodeListKnown, updated_studentIdsKnown]
+
+    file = open("EncodeFile.p", 'wb')
+    pickle.dump(updated_encodeListKnownWithIds, file)
+    fileName = "EncodeFile.p"
+    bucket = storage.bucket()
+    blob = bucket.blob(fileName)
+    blob.upload_from_filename(fileName)
+    file.close()
+    print("Encoding Complete")
+    return updated_encodeListKnownWithIds
+
+def update_encode_file(imgList, studentIds, encodeListKnown=[],studentIdsKnown=[]):
+    return encodeImages(imgList, studentIds,encodeListKnown,studentIdsKnown)
+
+# imgList, studentIds=get_upload_images_ids()
+# update_encode_file(imgList, studentIds)

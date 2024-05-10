@@ -1,13 +1,11 @@
 import os
+import cv2
 from datetime import datetime
-import tempfile
 import face_recognition
-import logging
 from initialize_firebase import *
 from EncodeGenerator import *
 from PIL import Image
 import shutil
-
 
 encodeListKnown, studentIds = get_encoded_images()
 
@@ -23,11 +21,12 @@ def add_user(name, file):
     user_id = new_user.key
     
     # Call add_pictures_of_user function and return its result
-    ret = add_pictures_of_user(user_id, file)
-    # if ret:
-    #     # Update the EncodeFile.p with the new encoding
-    #     update_encode_file()
-    #     encodeListKnown, studentIds = get_encoded_images()
+    ret,fileName = add_pictures_of_user(user_id, file)
+    if ret:
+        # Update the EncodeFile.p with the new encoding
+        global encodeListKnown, studentIds
+        imgList=[cv2.imread(fileName)]
+        encodeListKnown, studentIds=update_encode_file(imgList,[user_id],encodeListKnown,studentIds)
     return ret
 
 
@@ -51,14 +50,15 @@ def add_pictures_of_user(user_id,file):
         users_ref.child(user_id).delete()
         shutil.rmtree(f'dataset/{user_id}/')
         os.unlink(filename_path)
-        return False
+        return False,None
 
-    return True
+    return True,filename_path
 
 
 
 # Function to identify person from image
 def identify_person_from_image(image_path):
+   
     # Load image
     image = face_recognition.load_image_file(image_path)
     face_encodings = face_recognition.face_encodings(image)
@@ -84,7 +84,7 @@ def identify_person_from_image(image_path):
                     # Update value of last_presence
                     users_ref.child(person_id).update({'last_presence': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
                     isLastPresenceUpdating = True
-            else:
+            else:  
                 # Add value to last_presence
                 users_ref.child(person_id).update({'last_presence': datetime.now().strftime('%Y-%m-%d %H:%M:%S')})
                 isLastPresenceUpdating = True
