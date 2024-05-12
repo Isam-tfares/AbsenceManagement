@@ -10,6 +10,7 @@ const {
 teacherRouter.route("/").get(getAllTeachers);
 
 teacherRouter.route("/:id").get(getTeacherById);
+teacherRouter.route("absence/:id").get(getTeacherById);
 
 module.exports = teacherRouter;
 

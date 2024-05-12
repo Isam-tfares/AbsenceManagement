@@ -30,7 +30,21 @@ const getTeacherById = asynchandler(async (req, res) => {
     })
   });
 
+
+//@des get teacher Absence
+//@route GET /teacher/absence/:id
+//@access private
+
+const getTeacherAbsenceById = asynchandler(async (req, res) => {
+  res.status(200).json({
+      "Teacher absence by id" : req.params.id
+  })
+});
+
+
+
   module.exports = {
     getTeacherById,
-    getAllTeachers
+    getAllTeachers,
+    getTeacherAbsenceById
   }
