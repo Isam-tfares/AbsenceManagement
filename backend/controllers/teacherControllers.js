@@ -1,19 +1,17 @@
 const asynchandler = require("express-async-handler");
+const Teacher = require('../models/teacherModel')
 
 //@des get all Teacher
 //@route GET /teacher
 //@access private
 
 const getAllTeachers = asynchandler(async (req, res) => {
-    // const contacts = await Teacher.find({ user_id: req.user.id });
-    // res.status(200).json(contacts);
-    res.status(200).json({
-        "getAllTeachers" : true
-    })
+    const teachers = await Teacher.find();
+    res.status(200).json(teachers);
   });
 
 
-//@des get teacher
+//@des get teacher absence
 //@route GET /teacher/:id
 //@access private
 
