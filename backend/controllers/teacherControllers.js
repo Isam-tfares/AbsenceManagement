@@ -16,16 +16,13 @@ const getAllTeachers = asynchandler(async (req, res) => {
 //@access private
 
 const getTeacherById = asynchandler(async (req, res) => {
-    // const teacher = await Teacher.findById(req.params.id);
+    const teacher = await Teacher.findById(req.params.id);
   
-    // if (!teacher) {
-    //   res.status(404);
-    //   throw new Error("teacher not found");
-    // }
-    // res.status(200).json(teacher);
-    res.status(200).json({
-        "Teacher by id" : req.params.id
-    })
+    if (!teacher) {
+      res.status(404);
+      throw new Error("teacher not found");
+    }
+    res.status(200).json(teacher);
   });
 
 

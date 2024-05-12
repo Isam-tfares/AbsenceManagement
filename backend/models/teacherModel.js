@@ -20,6 +20,22 @@ const teacherSchema = new mongoose.Schema(
         required: true, 
         trim: true 
     },
+    attendance: [{
+      date: {
+          type: Date,
+          required: true
+      },
+      status: {
+          type: String,
+          enum: ['Present', 'Absent'],
+          required: true
+      },
+      Module: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'subject',
+          required: true
+      }
+    }]
   },
   {
     timestamps: true,
