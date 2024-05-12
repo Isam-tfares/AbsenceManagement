@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
-const studentSchema = new mongoose.Schema(
+const teacherSchema = new mongoose.Schema(
     {
     user: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
             ref: "User",
     },
-    class: { 
+    Departement : { 
         type: String, 
         required: true, 
         trim: true 
@@ -17,4 +17,4 @@ const studentSchema = new mongoose.Schema(
     timestamps: true,
   });
 
-  module.exports = mongoose.model("Student", studentSchema);
+  module.exports = mongoose.model("Teacher", teacherSchema);
