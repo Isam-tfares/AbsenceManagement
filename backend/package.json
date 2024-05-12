@@ -19,5 +19,8 @@
   "homepage": "https://github.com/Isam-tfares/AbsenceManagement#readme",
   "devDependencies": {
     "nodemon": "^3.1.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
   }
 }
